@@ -10,10 +10,10 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 public class Page {
-	
+
 	public static final String QUERY_HDR = "https://en.wikipedia.org/w/api.php?action=query&prop=info&pageids=";
 	public static final String QUERY_FTR = "&inprop=url&format=json";
-	
+
 	private String title;
 	private int id;
 	private String url;
@@ -24,7 +24,7 @@ public class Page {
 		System.out.println(title);
 		updateURL();
 	}
-	
+
 	public void updateURL() {
 		String get = QUERY_HDR + this.id + QUERY_FTR;
 		String json = "";
@@ -51,5 +51,13 @@ public class Page {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public String getTitle() {
+		return title;
+	}
+	
+	public String getURL() {
+		return url;
 	}
 }
