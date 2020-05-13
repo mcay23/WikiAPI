@@ -11,20 +11,39 @@ import java.util.Iterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.jsoup.Connection.Response;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public abstract class WikiAPI {
 	public static final String QUERY_HDR = "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=";
 	public static final String QUERY_FTR = "&format=json";
+	public static final String TOPICS_URL = "https://en.wikipedia.org/wiki/Category:Main_topic_classifications";
+	public static final String RANDOM_HDR = "https://en.wikipedia.org/wiki/Special:RandomInCategory/";
+	
+	// articles outside main page to add
+	public static final String[] more_categories = {"Good articles"};
 	
     public static void main(String[] args) throws IOException, InterruptedException {
-    	System.out.println(query("jakarta"));
+    	/*
+        ArrayList<Page> arr = query("jakarta post");
+    	for (Page p : arr) {
+    	    System.out.println(p.getTitle());
+    	}
+    	*/
+        // categories();
+    	Page pg = getRandomPage("Sports");
+        System.out.println(pg.getTitle());
+        System.out.println(pg.getURL());
+        System.out.println(pg.getWordCount());
     }
     
     public static ArrayList<Page> query(String input) {
         ArrayList<Page> pages = new ArrayList<>();
-    	String input2 = input;
-    	input2.replaceAll(" ", "%20");
-    	String get = QUERY_HDR + input2 + QUERY_FTR;
+    	String format_input = input.replaceAll(" ", "%20");
+    	String get = QUERY_HDR + format_input + QUERY_FTR;
         try {
 	        HttpClient client = HttpClient.newHttpClient();
 	        HttpRequest request = HttpRequest.newBuilder()
@@ -40,14 +59,67 @@ public abstract class WikiAPI {
 			Iterator<JSONObject> iterator = search.iterator();
             while (iterator.hasNext()) {
             	JSONObject page_obj = (JSONObject) iterator.next();
-            	String title = (String) page_obj.get("title");
             	Long id = (Long) page_obj.get("pageid");
-            	Page pg = new Page(title, (int) id.intValue());
+            	Page pg = new Page((int) id.intValue());
             	pages.add(pg);
             }
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
         return pages;
+    }
+    
+    public static ArrayList<String> categories() {
+        ArrayList<String> categories = new ArrayList<>();
+
+        Document doc;
+        try {
+            doc = Jsoup.connect(TOPICS_URL).userAgent("mozilla/17.0").timeout(10000).get();
+            Elements topics = doc.select("div.CategoryTreeItem");
+            for (Element a : topics) {
+                String title = a.select("a").first().text();
+                categories.add(title);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        categories.remove("Main topic articles");
+        for (String x : more_categories) {
+            categories.add(x);
+        }
+        
+        for (String x : categories) {
+            System.out.print(x + "; ");
+        }
+        return categories;
+    }
+    
+    public static Page getRandomPage(String category) {
+        return getRandomPage(category, 500);
+    }
+    
+    // size_threshold is word count lower bound
+    public static Page getRandomPage(String category, int size_threshold) {
+        Response response = null;
+        Page pg;
+        do {
+            try {
+                response = Jsoup.connect(RANDOM_HDR + category).followRedirects(true).execute();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            pg = new Page(response.url().toString());
+        } while (pg.getWordCount() < size_threshold);
+        return pg;
+    }
+    
+    public static Page getPage(String url) {
+        return new Page(url);
+    }
+    
+    public static Page getPage(int id) {
+        return new Page(id);
     }
 }
