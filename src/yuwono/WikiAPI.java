@@ -26,20 +26,6 @@ public abstract class WikiAPI {
 	// articles outside main page to add
 	public static final String[] more_categories = {"Good articles"};
 	
-    public static void main(String[] args) throws IOException, InterruptedException {
-    	/*
-        ArrayList<Page> arr = query("jakarta post");
-    	for (Page p : arr) {
-    	    System.out.println(p.getTitle());
-    	}
-    	*/
-        // categories();
-    	Page pg = getRandomPage("Sports");
-        System.out.println(pg.getTitle());
-        System.out.println(pg.getURL());
-        System.out.println(pg.getWordCount());
-    }
-    
     public static ArrayList<Page> query(String input) {
         ArrayList<Page> pages = new ArrayList<>();
     	String format_input = input.replaceAll(" ", "%20");
@@ -59,8 +45,8 @@ public abstract class WikiAPI {
 			Iterator<JSONObject> iterator = search.iterator();
             while (iterator.hasNext()) {
             	JSONObject page_obj = (JSONObject) iterator.next();
-            	Long id = (Long) page_obj.get("pageid");
-            	Page pg = new Page((int) id.intValue());
+            	String title = (String) page_obj.get("title");
+            	Page pg = new Page(title);
             	pages.add(pg);
             }
 		} catch (Exception e) {
@@ -97,7 +83,7 @@ public abstract class WikiAPI {
     }
     
     public static Page getRandomPage(String category) {
-        return getRandomPage(category, 500);
+        return getRandomPage(category, 200);
     }
     
     // size_threshold is word count lower bound
@@ -117,9 +103,5 @@ public abstract class WikiAPI {
     
     public static Page getPage(String url) {
         return new Page(url);
-    }
-    
-    public static Page getPage(int id) {
-        return new Page(id);
     }
 }
